@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual env
+.venv/
+env/
+venv/
+
+# macOS
+.DS_Store
+
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.blg
+*.lof
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Environment
+.env
+
+# VSCode
+.vscode/
+
+# Data
+*.csv
+*.xlsx
+
+# Ignore build and dist
+build/
+dist/
+
+# Keep reports (including PDFs) unless user wants them ignored
+# reports/*.pdf

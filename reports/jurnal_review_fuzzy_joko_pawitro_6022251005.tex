@@ -1,0 +1,292 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{datetime2}
+\usepackage{xparse}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{titling}
+\usepackage{enumitem}
+
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+}
+
+\setlength{\headheight}{37pt}
+
+\title{Tinjauan Kritis: Secure Control for T--S Fuzzy Wind Turbine
+Systems Under Hybrid Cyberattacks via an Adaptive Memory
+Event-Triggered Mechanism}
+\author{Joko Pawitro \\
+NRP: 6022251005}
+\date{31 March 2026}
+
+\usepackage{fancyhdr}
+\fancypagestyle{plain}{%
+    \fancyhf{} % clear all header and footer fields
+    \fancyfoot[R]{}
+    \fancyfoot[L]{}
+    \fancyhead[L]{\includegraphics[width=2cm]{ITS_pojok.pdf}}
+    \fancyhead[R]{ \DTMnow}
+}
+\makeatletter
+\def\@maketitle{%
+    \newpage
+    \null
+    \vskip 1em%
+    \begin{center}%
+    \let \footnote \thanks
+    {\LARGE \@title \par}%
+    \vskip 1em%
+    \end{center}%
+    \par
+    \vskip 1em}
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+\noindent\begin{tabular}{@{}ll}
+    Author(s): & Joko Pawitro \\
+    NRP: & 6022251005 \\
+    Lecturer: & Muhammad Qomaruz Zaman, S.T., M.T., Ph.D. \\
+    Class name: & Artificial Intelligence (EE235271) \\
+    Video link: &  \\
+    Repository link: &  \\
+\end{tabular}
+
+\vspace{1cm}
+
+\begin{abstract}
+Review ini mengevaluasi secara kritis metodologi kendali aman yang
+diusulkan Xu dkk. \cite{xu2025secure} untuk sistem turbin angin
+berbasis Permanent Magnet Synchronous Generator (PMSG) di bawah
+serangan siber hibrida.
+
+Fokus analisis terletak pada kebaruan Adaptive Memory Event-Triggered
+Mechanism (AMETM) yang mengintegrasikan sinyal acknowledgement (ACK)
+untuk deteksi Denial-of-Service (DoS), serta formulasi stabilitas
+berbasis Lyapunov dan optimasi Linear Matrix Inequalities (LMI).
+
+Ulasan menunjukkan bahwa mekanisme pemicu adaptif dengan memori historis
+mampu menjaga mean-square H\ensuremath{_\infty} asymptotic stability
+pada kondisi normal, serta uniformly ultimate boundedness saat terjadi
+DoS.
+
+Review juga membahas implikasi praktis, batasan implementasi, dan
+relevansinya terhadap kurikulum AI S2 ITS.
+
+\textbf{Kata kunci:} T--S fuzzy systems; AMETM; cyberattacks;
+wind turbine control; H\ensuremath{_\infty} stability.
+\end{abstract}
+
+\section*{Pendahuluan}
+
+Dalam evolusi smart grid, integrasi energi terbarukan menghadapi dua
+tantangan utama: non-linearitas tinggi pada dinamika sistem fisik dan
+kerentanan komunikasi terhadap gangguan siber.
+
+Turbin angin berbasis PMSG merupakan teknologi penting karena efisiensi
+dan kebutuhan perawatan yang relatif rendah, tetapi sifat stokastik
+kecepatan angin membuat kendali klasik sulit menjaga performa secara
+konsisten.
+
+Pada konteks tersebut, logika fuzzy -- khususnya model Takagi--Sugeno
+(T--S) -- relevan karena mampu memetakan sistem non-linear ke bentuk
+subsistem linear untuk desain kontroler yang lebih robust
+\cite{ross2010fuzzy}.
+
+Permasalahan menjadi lebih kompleks ketika Networked Control Systems
+(NCS) menggunakan kanal nirkabel. Serangan DoS menurunkan ketersediaan
+data, sedangkan deception attacks merusak integritas data.
+
+Tanpa strategi proteksi adaptif, kedua serangan tersebut dapat memicu
+degradasi performa bahkan ketidakstabilan mekanis pada turbin.
+
+Tujuan review ini adalah mengevaluasi efektivitas AMETM dan T--S fuzzy
+dalam menjaga ketahanan sistem di bawah serangan hibrida, serta
+menganalisis keterkaitannya dengan capaian pembelajaran mata kuliah
+Artificial Intelligence (EE235271) \cite{kurikulum_ai_its_2026}.
+
+\section*{Identitas Jurnal dan Informasi Umum}
+
+\begin{tabular}{@{}p{0.34\textwidth}p{0.62\textwidth}@{}}
+\toprule
+\textbf{Komponen Identitas} & \textbf{Detail Informasi} \\
+\midrule
+Judul Artikel & Secure Control for T--S Fuzzy Wind Turbine Systems Under
+Hybrid Cyberattacks via an Adaptive Memory Event-Triggered Mechanism \\
+Penulis & Dong Xu, Yajuan Liu, Sangmoon Lee \\
+Nama Jurnal & IEEE Transactions on Fuzzy Systems \\
+Volume/Issue/Tahun & Vol. 33, No. 5, 2025 \\
+DOI & 10.1109/TFUZZ.2025.3525778 \\
+Afiliasi Penulis & North China Electric Power University (China) dan
+Kyungpook National University (Korea Selatan) \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4cm}
+
+Artikel ini terbit pada jurnal bereputasi tinggi di bidang fuzzy
+systems. Karena itu, kontribusi metodenya layak dianalisis lebih dalam
+untuk konteks kontrol aman sistem energi.
+
+\section*{Ringkasan Artikel: Dekonstruksi Metodologi}
+
+Artikel ini menargetkan masalah kontrol aman untuk turbin angin yang
+dimodelkan dengan Takagi--Sugeno fuzzy models ketika sistem menghadapi
+hybrid cyberattacks (gabungan DoS dan deception).
+
+Kerangka yang diusulkan menyatukan pemodelan fuzzy, mekanisme pemicu
+adaptif, dan jaminan stabilitas stokastik:
+
+\begin{enumerate}
+    \item \textbf{Pemodelan T--S fuzzy dan variabel premis.}
+    Dinamika non-linear PMSG direpresentasikan sebagai beberapa
+    subsistem linear menggunakan membership functions. Variabel premis
+    utama adalah kecepatan sudut rotor
+    (\ensuremath{\omega_g}), lalu kontroler didesain melalui Parallel
+    Distributed Compensation (PDC).
+
+    \item \textbf{Adaptive Memory Event-Triggered Mechanism (AMETM).}
+    Mekanisme menyimpan data historis rilis sinyal, kemudian menyesuaikan
+    ambang pemicu secara adaptif. Integrasi sinyal ACK menjadi elemen
+    penting karena dapat mengidentifikasi kondisi DoS untuk menahan
+    transmisi sia-sia dan menghemat sumber daya komunikasi.
+
+    \item \textbf{Zero-Order Hold saat DoS.}
+    Ketika kanal komunikasi terputus, Zero-Order Hold (ZOH)
+    mempertahankan aksi kontrol terakhir yang valid sehingga loop kontrol
+    tidak langsung kehilangan kendali.
+
+    \item \textbf{Jaminan stabilitas.}
+    Penulis menurunkan kondisi berbasis LMI yang menjamin
+    mean-square H\ensuremath{_\infty} asymptotic stability pada kondisi
+    normal, serta uniformly ultimate boundedness pada interval DoS.
+\end{enumerate}
+
+\section*{Analisis Kritis: Evaluasi dan Dampak}
+
+\subsection*{Kelebihan}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Diferensiator teknis jelas.} Penggunaan memori historis
+    dalam AMETM meningkatkan respons pada kondisi transien dibandingkan
+    event-triggering statis.
+
+    \item \textbf{Deteksi serangan lebih praktis.} Integrasi ACK memberi
+    indikator DoS tanpa perlu perangkat intrusion detection terpisah.
+
+    \item \textbf{Landasan matematis kuat.} Pembuktian berbasis Lyapunov
+    dan LMI memberikan justifikasi formal terhadap klaim kestabilan.
+
+    \item \textbf{Efisiensi komunikasi.} Penurunan tingkat rilis paket
+    saat saluran diserang bukan kelemahan, tetapi strategi untuk
+    mencegah pemborosan energi node sensor.
+\end{itemize}
+
+\subsection*{Kekurangan dan Keterbatasan}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Kompleksitas desain tinggi.}
+    Penentuan gain kontroler memerlukan penyelesaian LMI yang kompleks
+    pada fase perancangan.
+
+    \item \textbf{Asumsi bounded uncertainty.}
+    Efek serangan dimodelkan dalam batas ketidakpastian tertentu; pada
+    skenario serangan tak terduga, asumsi ini bisa terlalu konservatif.
+
+    \item \textbf{Overhead memori dan perangkat.}
+    Pendekatan memory-based menambah kebutuhan buffer di node,
+    berpotensi menaikkan biaya perangkat lapangan.
+
+    \item \textbf{Validasi lapangan terbatas.}
+    Mayoritas hasil masih berbasis simulasi, belum diuji luas melalui
+    Hardware-in-the-Loop atau implementasi operasional.
+\end{itemize}
+
+\subsection*{Rekomendasi Perbaikan}
+
+\begin{itemize}[leftmargin=*]
+    \item Optimasi parameter fuzzy dan bobot matriks desain menggunakan
+    pendekatan meta-heuristik (misalnya genetic algorithm).
+
+    \item Uji ketahanan model terhadap skenario unbounded deception
+    attacks untuk memetakan batas kegagalan absolut.
+
+    \item Lakukan validasi Hardware-in-the-Loop (HIL) untuk mengukur
+    latensi pemrosesan, beban komputasi, dan performa real-time.
+\end{itemize}
+
+\section*{Relevansi dengan Kurikulum AI S2 ITS}
+
+Mata kuliah Artificial Intelligence (EE235271) di ITS (lihat kurikulum AI
+\cite{kurikulum_ai_its_2026}) mencakup topik fuzzy system, neural
+networks, dan optimisasi.
+
+Artikel yang direview memiliki keterkaitan langsung dengan beberapa
+capaian pembelajaran tingkat magister, terutama pada aspek analisis,
+desain sistem cerdas, dan pengambilan keputusan berbasis data.
+
+Secara spesifik:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{CLO penguasaan fuzzy systems.} Implementasi T--S fuzzy
+    pada PMSG menunjukkan aplikasi nyata logika fuzzy untuk sistem
+    dinamis non-linear.
+
+    \item \textbf{CPL analisis dan desain rekayasa.} Strategi kendali aman
+    yang diusulkan memperlihatkan integrasi teori kontrol, komunikasi,
+    dan keamanan siber.
+
+    \item \textbf{CPL pengambilan keputusan teknologi.}
+    Mekanisme adaptif berbasis kondisi serangan menggambarkan keputusan
+    operasional yang efisien dan berorientasi keberlanjutan.
+\end{itemize}
+
+Dalam konteks Indonesia, pendekatan ini relevan untuk sistem PLTB karena
+profil angin pesisir yang turbulen dapat memicu ketidaksinkronan variabel
+premis antara sensor dan kontroler.
+
+Karena itu, AMETM berpotensi menjadi topik proyek riset S2 yang
+menggabungkan analisis teoritis, simulasi, dan validasi implementasi.
+
+\section*{Kesimpulan dan Rekomendasi Strategis}
+
+\begin{itemize}[leftmargin=*]
+    \item Integrasi AMETM dan T--S fuzzy merupakan kontribusi signifikan
+    untuk meningkatkan ketahanan kontrol turbin angin terhadap serangan
+    siber hibrida.
+
+    \item Diferensiator utama artikel adalah pemanfaatan memori historis
+    untuk meningkatkan kualitas keputusan pemicu komunikasi, bukan sekadar
+    menurunkan frekuensi transmisi.
+
+    \item Untuk memperkuat adopsi industri, penelitian lanjutan perlu
+    menitikberatkan pada optimasi parameter otomatis, skenario serangan
+    yang lebih agresif, dan validasi HIL \cite{tian2020memory}.
+\end{itemize}
+
+\vspace{0.5cm}
+\noindent\textbf{Catatan personal:}
+
+Berdasarkan pengalaman profesional penulis pada monitoring dan
+pengendalian sistem tenaga terdistribusi dan pengolahan data sensor,
+pendekatan AMETM menarik karena sejalan dengan praktik penghematan
+komunikasi dan kebutuhan keandalan di lapangan.
+
+Namun, dari perspektif integrasi lapangan (offshore/subsea cable
+monitoring), aspek robustness terhadap kondisi lingkungan non-ideal dan
+maintenance overhead perlu perhatian khusus.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

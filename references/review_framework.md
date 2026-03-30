@@ -1,0 +1,1 @@
+/Users/jpawitro/OneDrive - Institut Teknologi Sepuluh Nopember/Resources/2nd_sem/04_artificial_inteligence/review_framework.md
