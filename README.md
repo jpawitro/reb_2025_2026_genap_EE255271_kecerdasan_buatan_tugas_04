@@ -1,51 +1,69 @@
-Tugas 4 - ANFIS
+# Tugas 4 ANFIS
 
-Repo ini berisi review jurnal dalam format LaTeX dan pengaturan proyek minimal.
+Repository ini berisi dua deliverable:
+- Review jurnal berbasis LaTeX (IEEE style).
+- Prototype Python AMETM T-S fuzzy untuk simulasi sederhana.
 
-Struktur penting:
-- reports/
-  - jurnal_review_fuzzy_joko_pawitro_6022251005.tex (laporan utama)
-  - references.bib (bibliografi IEEE)
-  - ITS_pojok.pdf, kurikulum_ai.pdf, Secure_Control_....pdf (dependensi lokal)
-- plots/ (kosong)
-- src/ (kosong)
-- tests/ (kosong)
+## Quick Start (Python)
 
-Cara kompilasi (dari folder `reports`):
+Prasyarat:
+- Python 3.8+
+- `pip`
 
-pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
-bibtex jurnal_review_fuzzy_joko_pawitro_6022251005
-pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
-pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
-
-Atau pakai `latexmk -pdf jurnal_review_fuzzy_joko_pawitro_6022251005.tex` jika tersedia.
-
-## Python Prototype (Phase 1)
-
-Implementasi awal AMETM T-S fuzzy tersedia di `src/ametm_ts`.
-
-Dependensi utama:
-- numpy
-- pandas
-- matplotlib
-- seaborn
-
-Contoh menjalankan unittest:
+Instal dependensi dan package lokal (editable):
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -p "test_*.py"
+python -m pip install -e .
 ```
 
-Contoh menjalankan pipeline simulasi (buat data sintetik + hasil CSV + plot):
+Jalankan simulasi (menghasilkan data sintetik, hasil simulasi, dan plot):
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m ametm_ts.cli \
+run-ametm-prototype \
   --data-path data/synthetic_wind_turbine_case.csv \
   --result-path data/simulation_results.csv \
   --plot-path plots/simulation_overview.png
+```
+
+Alternatif setara:
+
+```bash
+python -m ametm_ts.cli --help
+```
+
+Jalankan unit test:
+
+```bash
+python -m unittest discover -s tests -t . -p "test_*.py"
 ```
 
 Output utama:
 - `data/synthetic_wind_turbine_case.csv`
 - `data/simulation_results.csv`
 - `plots/simulation_overview.png`
+
+## Build Laporan LaTeX
+
+Dari folder `reports`:
+
+```bash
+pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
+bibtex jurnal_review_fuzzy_joko_pawitro_6022251005
+pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
+pdflatex jurnal_review_fuzzy_joko_pawitro_6022251005.tex
+```
+
+Jika tersedia, bisa diringkas dengan:
+
+```bash
+latexmk -pdf jurnal_review_fuzzy_joko_pawitro_6022251005.tex
+```
+
+## Struktur Folder Singkat
+
+- `src/ametm_ts`: implementasi prototype.
+- `tests`: unit test.
+- `data`: data sintetik dan hasil simulasi.
+- `plots`: keluaran visualisasi.
+- `reports`: laporan `.tex`, `.bib`, dan PDF.
+- `references`: paper acuan dan dokumen pendukung.
