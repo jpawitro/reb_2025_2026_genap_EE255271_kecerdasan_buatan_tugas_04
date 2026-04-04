@@ -2,8 +2,25 @@
 __pycache__/
 *.py[cod]
 *.so
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Python tooling/cache artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
 
 # Virtual env
+.python-version
 .venv/
 env/
 venv/
@@ -28,10 +45,13 @@ venv/
 
 # VSCode
 .vscode/
+thoughts/
 
 # Data
-*.csv
-*.xlsx
+# File data (CSV/XLSX) di-include ke repo.
+# Tambahkan rule khusus di bawah ini jika nanti ada data sementara lokal.
+# data/tmp/
+# data/generated/
 
 # Ignore build and dist
 build/

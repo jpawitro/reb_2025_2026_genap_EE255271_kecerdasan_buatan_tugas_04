@@ -5,6 +5,21 @@ description = "Repository tugas 4 - ANFIS: review jurnal dan pengaturan repo"
 authors = [ { name = "Joko Pawitro" } ]
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+	"numpy>=1.24",
+	"pandas>=1.5",
+	"matplotlib>=3.7",
+	"seaborn>=0.12",
+]
+
+[project.scripts]
+run-ametm-prototype = "ametm_ts.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

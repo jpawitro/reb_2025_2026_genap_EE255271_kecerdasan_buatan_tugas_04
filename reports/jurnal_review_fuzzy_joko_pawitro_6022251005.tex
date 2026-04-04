@@ -291,6 +291,24 @@ Namun, dari perspektif integrasi lapangan (offshore/subsea cable
 monitoring), aspek robustness terhadap kondisi lingkungan non-ideal dan
 maintenance overhead perlu perhatian khusus.
 
+Dalam konteks subsea cable monitoring berbasis DTS/DAS, keterkaitan AMETM
+dapat diringkas sebagai berikut:
+
+\begin{itemize}[leftmargin=*]
+    \item Menjaga kualitas keputusan saat komunikasi tidak stabil
+    (packet loss, latensi tinggi, dan gangguan telemetri).
+
+    \item Kombinasi ACK dan memori historis membantu membedakan kondisi
+    serangan/putus komunikasi dari fluktuasi operasional normal.
+
+    \item Strategi event-triggered menekan beban transmisi sehingga kanal
+    komunikasi lebih efisien tanpa kehilangan informasi penting.
+
+    \item Implementasi tetap memerlukan desain yang mempertimbangkan
+    keterbatasan buffer, daya komputasi edge, dan kompleksitas maintenance
+    perangkat bawah laut.
+\end{itemize}
+
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
