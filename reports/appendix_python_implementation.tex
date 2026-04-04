@@ -1,0 +1,261 @@
+\section*{Appendix A. Laporan Implementasi Python Prototype}
+
+Lampiran ini merangkum implementasi Python untuk prototype AMETM T--S fuzzy secara ringkas: arsitektur proyek, fungsi inti, serta validasi berbasis unit test dan pemeriksaan manual.
+
+\subsection*{A.1 Struktur Proyek Implementasi}
+
+\begin{lstlisting}[
+    basicstyle=\ttfamily\footnotesize,
+    numbers=none,
+    breaklines=true,
+    frame=single,
+    caption={Struktur direktori utama implementasi Python tugas 4}
+]
+folder_proyek/
+|-- pyproject.toml
+|-- src/
+|   `-- ametm_ts/
+|       |-- cli.py
+|       |-- fuzzy.py
+|       |-- ametm.py
+|       |-- simulation.py
+|       |-- metrics.py
+|       `-- wind_turbine.py
+|-- tests/
+|   |-- test_fuzzy.py
+|   |-- test_ametm.py
+|   |-- test_data_and_simulation.py
+|   `-- test_metrics.py
+|-- data/
+|   |-- synthetic_wind_turbine_case.csv
+|   `-- simulation_results.csv
+`-- plots/
+    `-- simulation_overview.png
+\end{lstlisting}
+
+\subsection*{A.2 Alur Eksekusi Pipeline}
+
+Pipeline pada \texttt{src/ametm\_ts/cli.py} berjalan dalam urutan:
+\begin{enumerate}
+    \item Membuat data sintetik jika file input belum tersedia.
+    \item Menjalankan simulasi plant + kontrol event-triggered adaptif.
+    \item Menyimpan hasil simulasi ke CSV.
+    \item Membuat visualisasi ringkasan.
+    \item Menghitung metrik evaluasi.
+\end{enumerate}
+
+\subsection*{A.3 Snippet Fungsi Utama}
+
+\textbf{1) Bobot fuzzy dua aturan (\texttt{fuzzy.py})}
+
+\begin{lstlisting}[
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{gray}\itshape,
+    breaklines=true,
+    frame=single,
+    caption={compute\_two\_rule\_weights(...)}
+]
+def compute_two_rule_weights(rotor_speed, nominal_speed=12.0, spread=4.0):
+    if spread <= 0:
+        raise ValueError("spread must be positive")
+
+    left = nominal_speed - spread / 2.0
+    right = nominal_speed + spread / 2.0
+
+    if rotor_speed <= left:
+        low = 1.0
+    elif rotor_speed >= right:
+        low = 0.0
+    else:
+        low = (right - rotor_speed) / (right - left)
+
+    high = 1.0 - low
+    weights = np.array([low, high], dtype=float)
+    weights /= np.sum(weights)
+    return weights
+\end{lstlisting}
+
+\textbf{2) Ambang adaptif AMETM (\texttt{ametm.py})}
+
+\begin{lstlisting}[
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{gray}\itshape,
+    breaklines=true,
+    frame=single,
+    caption={adaptive\_threshold(...) dan should\_release(...)}
+]
+def adaptive_threshold(self, ack_attack_flag: int) -> float:
+    history_mean = float(np.mean(self._history))
+    attack_term = self.attack_scale if int(ack_attack_flag) == 1 else 0.0
+    return self.base_threshold * (1.0 + attack_term + self.memory_weight * history_mean)
+
+def should_release(self, state_error, ack_attack_flag: int) -> bool:
+    threshold = self.adaptive_threshold(ack_attack_flag)
+    error_energy = float(state_error.T @ state_error)
+    return error_energy > threshold
+\end{lstlisting}
+
+\textbf{3) Logika event-triggered + ZOH saat DoS (\texttt{simulation.py})}
+
+\begin{lstlisting}[
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{gray}\itshape,
+    breaklines=true,
+    frame=single,
+    caption={Ekstrak loop utama run\_simulation(...)}
+]
+release_attempt = trigger.should_release(
+    state_error=(state_before - last_released_state),
+    ack_attack_flag=ack_flag,
+)
+
+dos_active = dos_flag == 1
+release_success = bool(release_attempt and not dos_active)
+
+if release_success:
+    held_control = control_candidate
+    last_released_state = state_before.copy()
+
+trigger.update_memory(release_success)
+state_after = plant.step(float(held_control), disturbance, weights)
+\end{lstlisting}
+
+\textbf{4) Ringkasan metrik evaluasi (\texttt{metrics.py})}
+
+\begin{lstlisting}[
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{gray}\itshape,
+    breaklines=true,
+    frame=single,
+    caption={summarize\_metrics(...)}
+]
+state_norm = np.sqrt(results["x1"] ** 2 + results["x2"] ** 2)
+release_ratio = float(results["release_success"].mean())
+bounded_ratio = float((state_norm <= state_bound).mean())
+
+return {
+    "release_ratio": release_ratio,
+    "communication_saving": 1.0 - release_ratio,
+    "bounded_ratio": bounded_ratio,
+    "rms_state": float(np.sqrt(np.mean(state_norm**2))),
+    "control_effort_l1": float(np.mean(np.abs(results["u_applied"]))),
+}
+\end{lstlisting}
+
+\textbf{5) Orkestrasi CLI (\texttt{cli.py})}
+
+\begin{lstlisting}[
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{orange},
+    commentstyle=\color{gray}\itshape,
+    breaklines=true,
+    frame=single,
+    caption={Ekstrak run\_pipeline(...)}
+]
+if not data_path.exists():
+    synthetic = generate_synthetic_case(num_steps=num_steps, dt=dt, seed=seed)
+    save_case_csv(synthetic, data_path)
+
+case_data = load_case_csv(data_path)
+results = run_simulation(case_data, plant=plant, trigger=trigger, gains=gains)
+save_case_csv(results, result_path)
+plot_simulation_results(results, plot_path)
+
+return summarize_metrics(results)
+\end{lstlisting}
+
+\subsection*{A.4 Validasi Berbasis Code (Unit Test)}
+
+Pengujian otomatis dilakukan dengan \texttt{unittest} pada empat berkas:
+\begin{itemize}[leftmargin=*]
+    \item \texttt{tests/test\_fuzzy.py}: validasi normalisasi bobot fuzzy dan batas ekstrem.
+    \item \texttt{tests/test\_ametm.py}: validasi kenaikan threshold pada status serangan dan keputusan release.
+    \item \texttt{tests/test\_data\_and\_simulation.py}: validasi skema data input dan konsistensi output simulasi.
+    \item \texttt{tests/test\_metrics.py}: validasi rentang metrik dan ketersediaan key output.
+\end{itemize}
+
+Perintah uji:
+\begin{lstlisting}[
+    basicstyle=\ttfamily\small,
+    numbers=none,
+    breaklines=true,
+    frame=single,
+    caption={Eksekusi unit test}
+]
+python -m unittest discover -s tests -t . -p "test_*.py"
+\end{lstlisting}
+
+Ringkasan hasil eksekusi:
+\begin{lstlisting}[
+    basicstyle=\ttfamily\small,
+    numbers=none,
+    breaklines=true,
+    frame=single,
+    caption={Output unit test}
+]
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.006s
+
+OK
+\end{lstlisting}
+
+\subsection*{A.5 Validasi Manual Hasil Simulasi}
+
+Selain unit test, dilakukan verifikasi manual terhadap metrik dari file
+\texttt{data/simulation\_results.csv}. Konsistensi utama dicek dengan relasi:
+\[
+\texttt{communication\_saving} = 1 - \texttt{release\_ratio}
+\]
+
+Hasil verifikasi manual sesuai output pipeline:
+
+\begin{center}
+\begin{tabular}{l r}
+\toprule
+\textbf{Metrik} & \textbf{Nilai} \\
+\midrule
+release\_ratio & 0.010000 \\
+communication\_saving & 0.990000 \\
+bounded\_ratio & 1.000000 \\
+rms\_state & 0.046057 \\
+control\_effort\_l1 & 0.025128 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Pemeriksaan manual tambahan pada membership dua aturan menunjukkan normalisasi konsisten ($w_{low}+w_{high}=1$):
+
+\begin{center}
+\begin{tabular}{c c c c}
+\toprule
+\textbf{Kecepatan Rotor} & $w_{low}$ & $w_{high}$ & Jumlah \\
+\midrule
+8.0  & 1.0000 & 0.0000 & 1.0000 \\
+12.0 & 0.5000 & 0.5000 & 1.0000 \\
+16.0 & 0.0000 & 1.0000 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{A.6 Ringkasan Lampiran}
+
+Implementasi Python telah dipisahkan per modul fungsional (fuzzy, AMETM,
+simulasi, metrik, dan CLI), dilengkapi validasi unit test, serta diverifikasi
+manual pada metrik kunci. Struktur ini membuat prototype mudah diuji ulang,
+dikembangkan, dan dipetakan kembali ke konsep teoretis yang dibahas pada
+review utama.
