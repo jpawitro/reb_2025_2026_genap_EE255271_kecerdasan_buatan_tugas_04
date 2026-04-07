@@ -8,18 +8,45 @@ Repository ini berisi dua deliverable:
 
 Prasyarat:
 - Python 3.8+
-- `pip`
 
-Instal dependensi dan package lokal (editable):
+### Opsi A (Direkomendasikan): `uv`
+
+Setup environment dan sinkronisasi dependency:
 
 ```bash
+uv sync
+```
+
+Jalankan simulasi dari root repository:
+
+```bash
+uv run python run.py \
+  --data-path data/synthetic_wind_turbine_case.csv \
+  --result-path data/simulation_results.csv \
+  --plot-path plots/simulation_overview.png
+```
+
+Jalankan unit test:
+
+```bash
+uv run python -m unittest discover -s tests -t . -p "test_*.py"
+```
+
+### Opsi B: `venv` + `pip` langsung
+
+Buat virtual environment, aktifkan, lalu install editable package:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
 python -m pip install -e .
 ```
 
-Jalankan simulasi (menghasilkan data sintetik, hasil simulasi, dan plot):
+Jalankan simulasi dari root repository:
 
 ```bash
-run-ametm-prototype \
+python run.py \
   --data-path data/synthetic_wind_turbine_case.csv \
   --result-path data/simulation_results.csv \
   --plot-path plots/simulation_overview.png
@@ -28,6 +55,7 @@ run-ametm-prototype \
 Alternatif setara:
 
 ```bash
+run-ametm-prototype --help
 python -m ametm_ts.cli --help
 ```
 
